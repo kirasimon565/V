@@ -1,0 +1,4 @@
+# Ignore PocketBase files
+pocketbase
+pocketbase.zip
+pb_data/

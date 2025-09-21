@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - (V)</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="signup-modal card">
+            <div class="progress-bar">
+                <div class="progress-bar-fill" id="progress-bar-fill"></div>
+            </div>
+
+            <div id="signup-steps-container">
+                <!-- Step 1: Username -->
+                <div class="signup-step active" data-step="1">
+                    <h2>Choose a username</h2>
+                    <p>Your unique name on (V). Must be 3-20 lowercase letters, numbers, or underscores.</p>
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" class="form-control" placeholder="@username" required>
+                        <div id="username-error" class="error-message"></div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Full Name -->
+                <div class="signup-step" data-step="2">
+                    <h2>What's your full name?</h2>
+                    <p>This will be displayed on your profile and in posts.</p>
+                    <div class="form-group">
+                        <label for="full_name">Full Name</label>
+                        <input type="text" id="full_name" name="full_name" class="form-control" required>
+                        <div id="fullname-error" class="error-message"></div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Password -->
+                <div class="signup-step" data-step="3">
+                    <h2>Create a password</h2>
+                    <p>Must be at least 8 characters, with 1 letter and 1 number.</p>
+                    <div class="form-group">
+                        <label for="password_signup">Password</label>
+                        <input type="password" id="password_signup" name="password_signup" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="passwordConfirm">Confirm Password</label>
+                        <input type="password" id="passwordConfirm" name="passwordConfirm" class="form-control" required>
+                        <div id="password-error" class="error-message"></div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Email -->
+                <div class="signup-step" data-step="4">
+                    <h2>What's your email?</h2>
+                    <p>We won't spam you. Used for verification and account security.</p>
+                     <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                        <div id="email-error" class="error-message"></div>
+                    </div>
+                </div>
+
+                <!-- Step 5: Interests (Simplified) -->
+                <div class="signup-step" data-step="5">
+                    <h2>What are you interested in?</h2>
+                    <p>This will help us recommend communities. (Feature coming soon!)</p>
+                     <div class="interests-grid">
+                        <div class="interest-chip">Tech</div>
+                        <div class="interest-chip">Science</div>
+                        <div class="interest-chip">Philosophy</div>
+                        <div class="interest-chip">Books</div>
+                        <div class="interest-chip">Startups</div>
+                        <div class="interest-chip">Music</div>
+                    </div>
+                </div>
+
+                <!-- Step 6: Bio -->
+                <div class="signup-step" data-step="6">
+                    <h2>Describe yourself</h2>
+                    <p>Your bio is your introduction to the (V) community.</p>
+                    <div class="form-group">
+                        <label for="bio">Bio (Optional)</label>
+                        <textarea id="bio" name="bio" class="form-control" rows="3" maxlength="250"></textarea>
+                        <div id="bio-error" class="error-message"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="signup-navigation">
+                <button id="back-btn" class="btn btn-secondary">Back</button>
+                <button id="next-btn" class="btn btn-primary">Next</button>
+                <button id="finish-btn" class="btn btn-primary hidden">Enter (V)</button>
+            </div>
+             <a href="/src/pages/welcome.html" class="auth-link">Cancel</a>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.2/dist/pocketbase.umd.js"></script>
+    <script type="module" src="../js/auth.js"></script>
+</body>
+</html>

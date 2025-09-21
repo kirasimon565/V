@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - (V)</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/feed.css"> <!-- Navbar styles -->
+    <link rel="stylesheet" href="../css/settings.css">
+</head>
+<body>
+    <header id="main-header"></header>
+
+    <main class="main-container">
+        <div class="full-width-container">
+            <h1>Settings</h1>
+
+            <!-- Edit Profile Section -->
+            <div class="card settings-card">
+                <h2>Edit Profile</h2>
+                <form id="profile-settings-form">
+                    <div class="form-group">
+                        <label for="settings-fullname">Full Name</label>
+                        <input type="text" id="settings-fullname" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="settings-bio">Bio</label>
+                        <textarea id="settings-bio" class="form-control" rows="3" maxlength="250"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Save Profile</button>
+                    <div id="profile-feedback" class="feedback-message"></div>
+                </form>
+            </div>
+
+            <!-- Change Password Section -->
+            <div class="card settings-card">
+                <h2>Change Password</h2>
+                <form id="password-settings-form">
+                    <div class="form-group">
+                        <label for="old-password">Old Password</label>
+                        <input type="password" id="old-password" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password">New Password</label>
+                        <input type="password" id="new-password" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="new-password-confirm">Confirm New Password</label>
+                        <input type="password" id="new-password-confirm" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Change Password</button>
+                    <div id="password-feedback" class="feedback-message"></div>
+                </form>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.2/dist/pocketbase.umd.js"></script>
+    <script type="module" src="../js/settings.js"></script>
+</body>
+</html>

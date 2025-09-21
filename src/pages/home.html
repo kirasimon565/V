@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - (V)</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/feed.css">
+</head>
+<body>
+    <header id="main-header"></header>
+
+    <main class="main-container">
+        <div class="feed-container" id="feed-container">
+            <!-- Posts will be loaded here by feed.js -->
+            <p class="loading-message">Loading feed...</p>
+        </div>
+        <div class="sidebar-container">
+            <!-- Future sidebar content, e.g., trending communities or suggested users -->
+            <div class="card">
+                <h4>Communities</h4>
+                <p>Coming soon.</p>
+            </div>
+        </div>
+    </main>
+
+    <button class="fab" id="new-post-btn" aria-label="Create new post">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+
+    <!-- Post Creation Modal (hidden by default) -->
+    <div class="modal-overlay hidden" id="post-modal-overlay">
+        <div class="modal-content card">
+            <h3>Create a new post</h3>
+            <form id="create-post-form">
+                <div class="form-group">
+                    <textarea id="post-content" class="form-control" rows="5" placeholder="What's on your mind?" maxlength="500" required></textarea>
+                    <div class="char-counter">
+                        <span id="char-count">0</span> / 500
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="post-community">Post to:</label>
+                    <select id="post-community" name="post-community" class="form-control">
+                        <option value="">My Profile</option>
+                        <!-- Options will be populated by feed.js -->
+                    </select>
+                </div>
+                <div id="post-error" class="error-message"></div>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-post-btn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Post</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.2/dist/pocketbase.umd.js"></script>
+    <script type="module" src="../js/feed.js"></script>
+    <script type="module" src="../js/auth.js"></script>
+</body>
+</html>

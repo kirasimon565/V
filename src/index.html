@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>V</title>
+    <!--
+      Note: Using a CDN for the PocketBase JS SDK for simplicity.
+      In a production environment, you'd likely bundle this with your other JS files.
+    -->
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.2/dist/pocketbase.umd.js"></script>
+    <script>
+        // This script acts as a simple client-side router for the entry point.
+        // It checks if the user's authentication token is valid in localStorage.
+        (function() {
+            const pb = new PocketBase('http://127.0.0.1:8090');
+
+            if (pb.authStore.isValid) {
+                // If the user is logged in, redirect to the main home feed.
+                window.location.replace('/src/pages/home.html');
+            } else {
+                // If not logged in, show the welcome page.
+                window.location.replace('/src/pages/welcome.html');
+            }
+        })();
+    </script>
+</head>
+<body>
+    <p>Loading...</p>
+</body>
+</html>

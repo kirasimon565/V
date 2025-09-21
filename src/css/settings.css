@@ -1,0 +1,23 @@
+/* src/css/settings.css */
+.settings-card {
+    margin-bottom: var(--spacing-lg);
+}
+
+.settings-card h2 {
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.feedback-message {
+    margin-top: var(--spacing-md);
+    font-weight: bold;
+}
+
+.feedback-message.success {
+    color: var(--color-success);
+}
+
+.feedback-message.error {
+    color: var(--color-error);
+}

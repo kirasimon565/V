@@ -1,0 +1,196 @@
+/* src/css/global.css */
+
+/* 1. CSS Variables (Design System) */
+:root {
+  /* Color Palette */
+  --color-primary: #007AFF; /* A standard blue */
+  --color-primary-hover: #0056b3;
+  --color-light-bg: #FFFFFF;
+  --color-light-text: #1d1d1f;
+  --color-dark-bg: #000000;
+  --color-dark-text: #F5F5F7;
+  --color-gray-light: #f2f2f2;
+  --color-gray-medium: #86868b;
+  --color-gray-dark: #333333;
+  --color-accent-like: #E0245E; /* Twitter's heart color */
+  --color-accent-repost: #17BF63; /* Green */
+  --color-accent-bookmark: #1DA1F2; /* Blue */
+  --color-error: #dc3545;
+  --color-success: #28a745;
+
+  /* Typography */
+  --font-family-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-size-headline: 20px;
+  --font-size-body: 16px;
+  --font-size-small: 12px;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+
+  /* Spacing */
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+
+  /* Borders & Shadows */
+  --border-radius-card: 16px;
+  --border-radius-button: 12px;
+  --border-radius-avatar: 50%;
+  --box-shadow-soft: 0 2px 8px rgba(0,0,0,0.08);
+
+  /* Set default theme to light */
+  --bg-color: var(--color-light-bg);
+  --text-color: var(--color-light-text);
+  --card-bg-color: var(--color-light-bg);
+  --border-color: var(--color-gray-light);
+}
+
+/* 2. Dark Theme Overrides */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: var(--color-dark-bg);
+    --text-color: var(--color-dark-text);
+    --card-bg-color: #1c1c1e; /* A slightly off-black for cards */
+    --border-color: var(--color-gray-dark);
+  }
+}
+
+/* Optional: Allow manual override with a data-theme attribute */
+[data-theme="dark"] {
+    --bg-color: var(--color-dark-bg);
+    --text-color: var(--color-dark-text);
+    --card-bg-color: #1c1c1e;
+    --border-color: var(--color-gray-dark);
+}
+
+[data-theme="light"] {
+    --bg-color: var(--color-light-bg);
+    --text-color: var(--color-light-text);
+    --card-bg-color: var(--color-light-bg);
+    --border-color: var(--color-gray-light);
+}
+
+
+/* 3. Basic Body Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+  font-family: var(--font-family-main);
+  font-size: var(--font-size-body);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* 4. Typography Styles */
+h1, h2, h3, h4, h5, h6 {
+    font-size: var(--font-size-headline);
+    font-weight: var(--font-weight-bold);
+    margin-bottom: var(--spacing-md);
+}
+
+p {
+    margin-bottom: var(--spacing-md);
+}
+
+small {
+    font-size: var(--font-size-small);
+    color: var(--color-gray-medium);
+}
+
+
+/* 5. Global Utility Classes */
+
+/* Cards */
+.card {
+    background-color: var(--card-bg-color);
+    border-radius: var(--border-radius-card);
+    padding: var(--spacing-md);
+    box-shadow: var(--box-shadow-soft);
+    border: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-md);
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    font-weight: var(--font-weight-bold);
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    border: 1px solid transparent;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-body);
+    border-radius: var(--border-radius-button);
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-primary {
+    color: var(--color-light-bg);
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+    text-decoration: none;
+}
+
+.btn-secondary {
+    color: var(--color-primary);
+    background-color: transparent;
+    border-color: var(--color-primary);
+}
+
+.btn-secondary:hover {
+    color: var(--color-light-bg);
+    background-color: var(--color-primary);
+    text-decoration: none;
+}
+
+/* Forms */
+.form-group {
+    margin-bottom: var(--spacing-md);
+}
+
+.form-control {
+    display: block;
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-body);
+    line-height: 1.5;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-button);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    outline: 0;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Utility */
+.text-center {
+    text-align: center;
+}
+.hidden {
+    display: none;
+}

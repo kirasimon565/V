@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - (V)</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/feed.css"> <!-- Re-use for navbar and post cards -->
+    <link rel="stylesheet" href="../css/profile.css">
+</head>
+<body>
+    <header id="main-header"></header>
+
+    <main class="main-container" id="profile-main-container">
+        <!-- Profile content will be loaded here by profile.js -->
+        <p class="loading-message">Loading profile...</p>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.2/dist/pocketbase.umd.js"></script>
+    <script type="module" src="../js/profile.js"></script>
+</body>
+</html>
