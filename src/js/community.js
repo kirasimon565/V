@@ -1,4 +1,4 @@
-import { checkAuth, loadComponent, timeAgo, simpleMarkdown } from './utils.js';
+import { checkAuth, loadComponent, timeAgo, simpleMarkdown, createPostCardElement } from './utils.js';
 
 const pb = checkAuth();
 if (!pb) throw new Error("Redirecting to login...");
@@ -67,11 +67,25 @@ async function loadSingleCommunity() {
         const community = await pb.collection('communities').getOne(communityId);
         document.title = `${community.name} - (V)`;
 
+        const isMember = community.members?.includes(currentUser.id);
+
+        const joinButtonHtml = `
+            <div class="community-actions">
+                <button class="btn ${isMember ? 'btn-secondary' : 'btn-primary'}" id="join-leave-btn">
+                    ${isMember ? 'Leave' : 'Join'}
+                </button>
+            </div>`;
+
         // Render header
         const headerHtml = `
             <div class="community-header">
-                <h1>${community.name}</h1>
-                <p>${community.description}</p>
+                <div class="community-header-main">
+                    <div>
+                        <h1>${community.name}</h1>
+                        <p>${community.description}</p>
+                    </div>
+                    ${joinButtonHtml}
+                </div>
                 ${community.rules ? `<div class="community-rules"><h4>Rules</h4>${simpleMarkdown(community.rules)}</div>` : ''}
             </div>
             <div class="community-feed" id="community-feed-posts">
@@ -80,11 +94,13 @@ async function loadSingleCommunity() {
         `;
         container.innerHTML = headerHtml;
 
+        setupJoinLeaveButton(community);
+
         // Load posts
         const postsContainer = document.getElementById('community-feed-posts');
         const posts = await pb.collection('posts').getFullList({
             filter: `community = "${communityId}"`,
-            expand: 'author',
+            expand: 'author,original_post,original_post.author',
             sort: '-created'
         });
 
@@ -94,24 +110,51 @@ async function loadSingleCommunity() {
         }
 
         postsContainer.innerHTML = ''; // Clear loading
-        const postCardTemplate = await (await fetch('/src/components/post-card.html')).text();
 
         for (const post of posts) {
-            const card = document.createElement('div');
-            card.innerHTML = postCardTemplate;
-            const author = post.expand.author;
-            card.querySelector('.post-author-name').textContent = author.full_name || 'No Name';
-            card.querySelector('.post-author-username').textContent = `@${author.username}`;
-            card.querySelector('.post-author-link').href = `/src/pages/profile.html?u=${author.username}`;
-            card.querySelector('.post-timestamp').textContent = `· ${timeAgo(post.created)}`;
-            card.querySelector('.post-content p').innerHTML = simpleMarkdown(post.content);
-            postsContainer.appendChild(card.firstElementChild);
+            const postCard = await createPostCardElement(post, pb, currentUser);
+            postsContainer.appendChild(postCard);
         }
 
     } catch (err) {
         console.error("Failed to load community:", err);
         container.innerHTML = '<p class="loading-message">Could not load this community. It may be private or does not exist.</p>';
     }
+}
+
+function setupJoinLeaveButton(community) {
+    const joinBtn = document.getElementById('join-leave-btn');
+    if (!joinBtn) return;
+    const currentUser = pb.authStore.model;
+
+    joinBtn.addEventListener('click', async () => {
+        joinBtn.disabled = true;
+        const currentMembers = community.members || [];
+        const isCurrentlyMember = currentMembers.includes(currentUser.id);
+
+        let newMembers;
+        if (isCurrentlyMember) {
+            newMembers = currentMembers.filter(id => id !== currentUser.id);
+        } else {
+            newMembers = [...currentMembers, currentUser.id];
+        }
+
+        try {
+            const updatedCommunity = await pb.collection('communities').update(community.id, { 'members': newMembers });
+
+            // Update local community object and button state
+            community.members = updatedCommunity.members;
+            joinBtn.textContent = isCurrentlyMember ? 'Join' : 'Leave';
+            joinBtn.classList.toggle('btn-primary');
+            joinBtn.classList.toggle('btn-secondary');
+
+        } catch (err) {
+            console.error("Failed to update membership", err);
+            alert("Could not update membership status.");
+        } finally {
+            joinBtn.disabled = false;
+        }
+    });
 }
 
 init();

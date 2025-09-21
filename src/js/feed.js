@@ -1,4 +1,4 @@
-import { checkAuth, loadComponent, timeAgo, simpleMarkdown } from './utils.js';
+import { checkAuth, loadComponent, createPostCardElement } from './utils.js';
 
 const pb = checkAuth();
 if (!pb) {
@@ -6,9 +6,17 @@ if (!pb) {
     throw new Error("Redirecting to login...");
 }
 
-const currentUser = pb.authStore.model;
+let currentUser = pb.authStore.model;
 
 async function initHomePage() {
+    // Get the latest user data to ensure 'following' is up-to-date
+    try {
+        await pb.collection('users').authRefresh();
+        currentUser = pb.authStore.model;
+    } catch (err) {
+        console.error("Auth refresh failed, feed may be incomplete.", err);
+    }
+
     // Load Navbar and add its logic
     await loadComponent('main-header', '/src/components/navbar.html');
     initNavbar();
@@ -18,6 +26,12 @@ async function initHomePage() {
 
     // Load the main feed
     loadPosts();
+
+    // Listen for new posts created elsewhere (e.g. reposts) to update the feed
+    document.addEventListener('newPostCreated', (e) => {
+        console.log('New post created event received:', e.detail);
+        prependPost(e.detail);
+    });
 }
 
 function initNavbar() {
@@ -111,147 +125,61 @@ function initPostModal() {
 
 async function loadPosts() {
     const feedContainer = document.getElementById('feed-container');
-    feedContainer.innerHTML = '<p class="loading-message">Loading feed...</p>';
+    feedContainer.innerHTML = '<p class="loading-message">Loading your personalized feed...</p>';
 
     try {
-        const resultList = await pb.collection('posts').getList(1, 30, {
+        // Step 1: Get IDs of followed users and joined communities
+        const followedUsers = currentUser.following || [];
+        const joinedCommunitiesResult = await pb.collection('communities').getFullList({
+            filter: `members ~ "${currentUser.id}"`
+        });
+        const joinedCommunityIds = joinedCommunitiesResult.map(c => c.id);
+
+        // Step 2: Build the filter
+        const followingFilter = followedUsers.map(id => `author.id = "${id}"`).join(' || ');
+        const communitiesFilter = joinedCommunityIds.map(id => `community.id = "${id}"`).join(' || ');
+
+        let finalFilter = '';
+        if (followingFilter && communitiesFilter) {
+            finalFilter = `(${followingFilter}) || (${communitiesFilter})`;
+        } else if (followingFilter) {
+            finalFilter = followingFilter;
+        } else if (communitiesFilter) {
+            finalFilter = communitiesFilter;
+        } else {
+            // User follows no one and is in no communities
+            feedContainer.innerHTML = '<p class="loading-message">Follow users or join communities to see posts here!</p>';
+            return;
+        }
+
+        // Step 3: Fetch posts with the combined filter
+        const resultList = await pb.collection('posts').getList(1, 50, { // Increased limit for combined feed
+            filter: finalFilter,
             sort: '-created',
-            expand: 'author'
+            expand: 'author,original_post,original_post.author'
         });
 
         feedContainer.innerHTML = ''; // Clear loading message
         if (resultList.items.length === 0) {
-            feedContainer.innerHTML = '<p class="loading-message">The feed is empty. Be the first to post!</p>';
+            feedContainer.innerHTML = '<p class="loading-message">No posts from your followed users or communities yet.</p>';
             return;
         }
 
         for (const post of resultList.items) {
-            await appendPost(post);
+            const postCard = await createPostCardElement(post, pb, currentUser);
+            feedContainer.appendChild(postCard);
         }
 
     } catch (err) {
         console.error('Failed to load posts:', err);
-        feedContainer.innerHTML = '<p class="loading-message">Could not load the feed. Please try again later.</p>';
+        feedContainer.innerHTML = '<p class="loading-message">Could not load your feed. Please try again later.</p>';
     }
-}
-
-let postCardTemplate = null;
-async function getPostCardTemplate() {
-    if (!postCardTemplate) {
-        try {
-            const response = await fetch('/src/components/post-card.html');
-            if (!response.ok) throw new Error(`Failed to fetch template: ${response.statusText}`);
-            postCardTemplate = await response.text();
-        } catch (error) {
-            console.error(error);
-            return '<p>Error loading post template.</p>';
-        }
-    }
-    return postCardTemplate;
-}
-
-async function createPostCard(post) {
-    const template = await getPostCardTemplate();
-    const card = document.createElement('div');
-    card.innerHTML = template;
-    const postCard = card.firstElementChild;
-
-    postCard.dataset.postId = post.id;
-
-    const author = post.expand.author;
-    if (author) {
-        postCard.querySelector('.post-author-name').textContent = author.full_name || 'No Name';
-        postCard.querySelector('.post-author-username').textContent = `@${author.username}`;
-        postCard.querySelector('.post-author-link').href = `/src/pages/profile.html?u=${author.username}`;
-    }
-
-    postCard.querySelector('.post-timestamp').textContent = `· ${timeAgo(post.created)}`;
-    postCard.querySelector('.post-content p').innerHTML = simpleMarkdown(post.content);
-
-    const likeBtn = postCard.querySelector('.like-btn');
-    setupLikeButton(likeBtn, post.id);
-
-    return postCard;
-}
-
-async function appendPost(post) {
-    const feedContainer = document.getElementById('feed-container');
-    const postCard = await createPostCard(post);
-    feedContainer.appendChild(postCard);
 }
 
 async function prependPost(post) {
     const feedContainer = document.getElementById('feed-container');
-    const postCard = await createPostCard(post);
+    const postCard = await createPostCardElement(post, pb, currentUser);
     feedContainer.prepend(postCard);
-}
-
-async function setupLikeButton(button, postId) {
-    const likeCountSpan = button.querySelector('.like-count');
-
-    // 1. Get initial like count for the post
-    const countResult = await pb.collection('interactions').getList(1, 1, {
-        filter: `post = "${postId}" && type = "like"`
-    });
-    let likeCount = countResult.totalItems;
-    likeCountSpan.textContent = likeCount;
-
-    // 2. Check if the current user has liked this post
-    let userLikeRecord = null;
-    try {
-        userLikeRecord = await pb.collection('interactions').getFirstListItem(`post = "${postId}" && user = "${currentUser.id}" && type = "like"`);
-        button.classList.add('active');
-    } catch (error) {
-        // 404 means user hasn't liked it, which is fine.
-        if (error.status !== 404) console.error("Error checking for user's like:", error);
-    }
-
-    // 3. Add click event listener
-    button.addEventListener('click', async () => {
-        button.disabled = true;
-        if (userLikeRecord) {
-            // User has liked it, so unlike it
-            try {
-                await pb.collection('interactions').delete(userLikeRecord.id);
-                userLikeRecord = null;
-                button.classList.remove('active');
-                likeCount--;
-                likeCountSpan.textContent = likeCount;
-            } catch (err) {
-                console.error("Failed to unlike:", err);
-            }
-        } else {
-            // User hasn't liked it, so like it
-            try {
-                const data = { user: currentUser.id, post: postId, type: 'like' };
-                userLikeRecord = await pb.collection('interactions').create(data);
-                button.classList.add('active');
-                likeCount++;
-                likeCountSpan.textContent = likeCount;
-
-                // --- Create Notification (Client-side simulation) ---
-                const post = await pb.collection('posts').getOne(postId);
-                if (post.author !== currentUser.id) { // Don't notify on your own posts
-                    const notificationData = {
-                        user: post.author, // The recipient
-                        source_user: currentUser.id,
-                        type: 'like',
-                        post: postId,
-                        read: false
-                    };
-                    // Fire-and-forget
-                    pb.collection('notifications').create(notificationData).catch(err => {
-                        console.error("Failed to create notification:", err);
-                    });
-                }
-                // --- End Notification ---
-
-            } catch (err) {
-                console.error("Failed to like:", err);
-            }
-        }
-        button.disabled = false;
-    });
 }
 
 

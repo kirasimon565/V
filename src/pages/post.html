@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Post - (V)</title>
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/feed.css"> <!-- Re-use for navbar and post cards -->
+</head>
+<body>
+    <header id="main-header"></header>
+
+    <main class="main-container">
+        <div class="full-width-container" id="post-container">
+            <p class="loading-message">Loading post...</p>
+        </div>
+        <div class="full-width-container" id="comments-container">
+            <div class="card">
+                <h3>Comments</h3>
+                <form id="comment-form">
+                    <div class="form-group">
+                        <textarea id="comment-content" class="form-control" rows="3" placeholder="Write a comment..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Post Comment</button>
+                </form>
+            </div>
+            <div id="comments-list" class="comments-list-container">
+                <!-- Comments will be loaded here by post.js -->
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.2/dist/pocketbase.umd.js"></script>
+    <script type="module" src="../js/post.js"></script>
+</body>
+</html>

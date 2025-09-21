@@ -35,8 +35,16 @@
     border: 1px solid var(--border-color);
 }
 
-.community-header h1 {
+.community-header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--spacing-md);
     margin-bottom: var(--spacing-sm);
+}
+
+.community-header-main h1 {
+    margin-bottom: 0;
 }
 
 .community-header p {

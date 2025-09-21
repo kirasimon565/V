@@ -1,12 +1,16 @@
-import { checkAuth, loadComponent, timeAgo, simpleMarkdown } from './utils.js';
+import { checkAuth, loadComponent, timeAgo, simpleMarkdown, createPostCardElement } from './utils.js';
 
 // --- Auth Check and Basic Setup ---
 const pb = checkAuth();
 if (!pb) throw new Error("Redirecting to login...");
-const currentUser = pb.authStore.model;
+let currentUser = pb.authStore.model;
 
 // --- Main Initialization ---
 async function initProfilePage() {
+    // Refresh the authStore to make sure we have the latest user data (e.g. 'following' list)
+    await pb.collection('users').authRefresh();
+    currentUser = pb.authStore.model;
+
     await loadComponent('main-header', '/src/components/navbar.html');
     initNavbar(); // Re-initialize navbar logic for this page
 
@@ -79,6 +83,7 @@ async function renderProfile(username) {
         container.innerHTML = profileHtml;
 
         setupTabs(user);
+        setupFollowButton(user);
         loadUserPosts(user.id);
 
     } catch (err) {
@@ -95,13 +100,63 @@ function getActionButton(user) {
     if (user.id === currentUser.id) {
         return `<a href="/src/pages/settings.html" class="btn btn-secondary">Edit Profile</a>`;
     }
-    // Follow logic is a placeholder for now
-    return `<button class="btn btn-primary" id="follow-btn">Follow</button>`;
+
+    const isFollowing = currentUser.following?.includes(user.id);
+    const buttonText = isFollowing ? 'Unfollow' : 'Follow';
+    const buttonClass = isFollowing ? 'btn-secondary' : 'btn-primary';
+
+    return `<button class="${buttonClass}" id="follow-btn" data-user-id="${user.id}">${buttonText}</button>`;
+}
+
+function setupFollowButton(user) {
+    const followBtn = document.getElementById('follow-btn');
+    if (!followBtn) return;
+
+    followBtn.addEventListener('click', async () => {
+        followBtn.disabled = true;
+        const userIdToFollow = user.id;
+        const currentFollowing = currentUser.following || [];
+        const isCurrentlyFollowing = currentFollowing.includes(userIdToFollow);
+
+        let newFollowing;
+        if (isCurrentlyFollowing) {
+            // Unfollow
+            newFollowing = currentFollowing.filter(id => id !== userIdToFollow);
+        } else {
+            // Follow
+            newFollowing = [...currentFollowing, userIdToFollow];
+        }
+
+        try {
+            await pb.collection('users').update(currentUser.id, { 'following': newFollowing });
+            // Refresh the local user model
+            await pb.collection('users').authRefresh();
+            currentUser = pb.authStore.model; // Update the global currentUser object
+
+            // Toggle button state visually
+            followBtn.textContent = isCurrentlyFollowing ? 'Follow' : 'Unfollow';
+            followBtn.classList.toggle('btn-primary');
+            followBtn.classList.toggle('btn-secondary');
+
+        } catch (err) {
+            console.error("Failed to update follow status", err);
+            alert("Could not update follow status.");
+        } finally {
+            followBtn.disabled = false;
+        }
+    });
 }
 
 function setupTabs(user) {
     const tabButtons = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+    const bookmarksTab = document.querySelector('.tab-btn[data-tab="bookmarks"]');
+
+    // Hide bookmarks tab if not viewing your own profile, as they are private
+    if (user.id !== currentUser.id) {
+        if (bookmarksTab) bookmarksTab.style.display = 'none';
+        document.getElementById('bookmarks-content').style.display = 'none';
+    }
 
     tabButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -114,8 +169,12 @@ function setupTabs(user) {
             });
 
             // Load content on tab click if it hasn't been loaded
-            if (tab === 'posts' && button.dataset.loaded !== 'true') {
-                loadUserPosts(user.id);
+            if (button.dataset.loaded !== 'true') {
+                if (tab === 'posts') {
+                    loadUserPosts(user.id);
+                } else if (tab === 'bookmarks' && user.id === currentUser.id) {
+                    loadBookmarkedPosts(user.id);
+                }
                 button.dataset.loaded = 'true';
             }
         });
@@ -130,7 +189,7 @@ async function loadUserPosts(userId) {
         const resultList = await pb.collection('posts').getList(1, 50, {
             filter: `author = "${userId}"`,
             sort: '-created',
-            expand: 'author'
+            expand: 'author,original_post,original_post.author'
         });
 
         if (resultList.items.length === 0) {
@@ -139,20 +198,9 @@ async function loadUserPosts(userId) {
         }
 
         postsContainer.innerHTML = ''; // Clear loading message
-        const postCardTemplate = await (await fetch('/src/components/post-card.html')).text();
 
         for (const post of resultList.items) {
-            const card = document.createElement('div');
-            card.innerHTML = postCardTemplate;
-            const postCard = card.firstElementChild;
-
-            const author = post.expand.author;
-            postCard.querySelector('.post-author-name').textContent = author.full_name || 'No Name';
-            postCard.querySelector('.post-author-username').textContent = `@${author.username}`;
-            postCard.querySelector('.post-author-link').href = `/src/pages/profile.html?u=${author.username}`;
-            postCard.querySelector('.post-timestamp').textContent = `· ${timeAgo(post.created)}`;
-            postCard.querySelector('.post-content p').innerHTML = simpleMarkdown(post.content);
-
+            const postCard = await createPostCardElement(post, pb, currentUser);
             postsContainer.appendChild(postCard);
         }
 
@@ -165,6 +213,42 @@ async function loadUserPosts(userId) {
 function renderError(message, container = document.getElementById('profile-main-container')) {
     if (container) {
         container.innerHTML = `<p class="loading-message">${message}</p>`;
+    }
+}
+
+async function loadBookmarkedPosts(userId) {
+    const container = document.getElementById('bookmarks-content');
+    container.innerHTML = '<p class="loading-message">Loading bookmarks...</p>';
+
+    try {
+        const resultList = await pb.collection('interactions').getFullList({
+            filter: `user = "${userId}" && type = "bookmark"`,
+            sort: '-created',
+            expand: 'post,post.author'
+        });
+
+        if (resultList.length === 0) {
+            container.innerHTML = '<p class="loading-message">You haven\'t bookmarked any posts yet.</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+        for (const interaction of resultList) {
+            // The post object is nested inside the expand object
+            const post = interaction.expand?.post;
+            if (post) {
+                // We need to ensure the author is also expanded for the post card
+                if (!post.expand) post.expand = {};
+                post.expand.author = interaction.expand?.['post.author'];
+
+                const postCard = await createPostCardElement(post, pb, currentUser);
+                container.appendChild(postCard);
+            }
+        }
+
+    } catch (err) {
+        console.error('Failed to load bookmarks:', err);
+        container.innerHTML = '<p class="loading-message">Could not load bookmarks.</p>';
     }
 }
 

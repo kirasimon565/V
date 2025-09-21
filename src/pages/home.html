@@ -58,5 +58,25 @@
     <script src="https://cdn.jsdelivr.net/npm/pocketbase@0.21.2/dist/pocketbase.umd.js"></script>
     <script type="module" src="../js/feed.js"></script>
     <script type="module" src="../js/auth.js"></script>
+
+    <!-- Repost Modal (hidden by default) -->
+    <div class="modal-overlay hidden" id="repost-modal-overlay">
+        <div class="modal-content card">
+            <h3>Repost</h3>
+            <form id="repost-form">
+                <div class="form-group">
+                    <textarea id="repost-comment" class="form-control" rows="2" placeholder="Add a comment (optional)..." maxlength="500"></textarea>
+                </div>
+                <div class="original-post-embed" id="original-post-embed">
+                    <!-- Original post content will be injected here by JS -->
+                </div>
+                <div id="repost-error" class="error-message"></div>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-repost-btn" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Repost</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
