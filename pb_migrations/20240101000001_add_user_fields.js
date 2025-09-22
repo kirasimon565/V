@@ -18,31 +18,21 @@ migrate((db) => {
     }
   }));
 
-  // Add bio field
-  collection.schema.addField(new SchemaField({
-    "name": "bio",
-    "type": "text",
-    "required": false,
-    "presentable": false,
-    "unique": false,
-    "options": {
-      "min": null,
-      "max": 250,
-      "pattern": ""
-    }
-  }));
-
-  // The 'verified' field is now built-in, so we don't need to add it.
+  // 'bio' and 'verified' are now assumed to be built-in.
 
   return dao.saveCollection(collection);
 }, (db) => {
   const dao = new Dao(db);
   const collection = dao.findCollectionByNameOrId("_pb_users_auth_");
 
-  // Remove fields in reverse order
-  // The 'verified' field is built-in, so we don't remove it.
-  collection.schema.removeField(collection.schema.getFieldByName("bio").id);
-  collection.schema.removeField(collection.schema.getFieldByName("full_name").id);
-
-  return dao.saveCollection(collection);
+  // In the down migration, only remove the field we know we added.
+  // This makes the down migration safer.
+  try {
+    const field = dao.findFieldByNameAndCollection("full_name", "_pb_users_auth_");
+    collection.schema.removeField(field.id);
+    return dao.saveCollection(collection);
+  } catch (e) {
+    // field doesn't exist
+    return;
+  }
 })
