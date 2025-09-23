@@ -182,7 +182,7 @@ async function setupRepostButton(button, post, pb, currentUser) {
         embedContainer.innerHTML = '';
         embedContainer.appendChild(postClone);
 
-        modal.classList.remove('hidden');
+        modal.style.display = 'flex';
 
         // Use a one-time event listener for submission
         const handleSubmit = async (e) => {
@@ -201,7 +201,7 @@ async function setupRepostButton(button, post, pb, currentUser) {
                     expand: 'author,original_post,original_post.author'
                 });
 
-                modal.classList.add('hidden');
+                modal.style.display = 'none';
                 form.reset();
 
                 // Dispatch a custom event so the feed can update itself
@@ -221,7 +221,7 @@ async function setupRepostButton(button, post, pb, currentUser) {
 
         // Also need a one-time listener for the cancel button
         const handleCancel = () => {
-            modal.classList.add('hidden');
+            modal.style.display = 'none';
             form.reset();
             form.removeEventListener('submit', handleSubmit);
             cancelBtn.removeEventListener('click', handleCancel);

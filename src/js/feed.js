@@ -52,6 +52,8 @@ function initNavbar() {
 function initPostModal() {
     const newPostBtn = document.getElementById('new-post-btn');
     const modalOverlay = document.getElementById('post-modal-overlay');
+    if (!newPostBtn || !modalOverlay) return;
+
     const cancelBtn = document.getElementById('cancel-post-btn');
     const postForm = document.getElementById('create-post-form');
     const contentTextarea = document.getElementById('post-content');
@@ -60,7 +62,7 @@ function initPostModal() {
     const communitySelect = document.getElementById('post-community');
 
     newPostBtn.addEventListener('click', async () => {
-        modalOverlay.classList.remove('hidden');
+        modalOverlay.style.display = 'flex';
 
         // Fetch user's communities and populate dropdown
         try {
@@ -80,10 +82,10 @@ function initPostModal() {
         }
     });
 
-    cancelBtn.addEventListener('click', () => modalOverlay.classList.add('hidden'));
+    cancelBtn.addEventListener('click', () => { modalOverlay.style.display = 'none'; });
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) {
-            modalOverlay.classList.add('hidden');
+            modalOverlay.style.display = 'none';
         }
     });
 
@@ -108,7 +110,7 @@ function initPostModal() {
             }
             const newPost = await pb.collection('posts').create(data, { expand: 'author' });
 
-            modalOverlay.classList.add('hidden');
+            modalOverlay.style.display = 'none';
             postForm.reset();
             charCount.textContent = '0';
 
